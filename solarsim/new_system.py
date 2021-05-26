@@ -4,7 +4,13 @@ import math
 import numpy as np
 import turtle
 
-# GM1 is for the Sun
+"""
+This is a simulation of the solar system with a new star added
+with a specified starting position and velocity.
+"""
+
+# Each "GM" is just the gravitational constant, G, times the mass of some star or planet, in units of AU^2 / year^3
+# GM1 is for the Sun, 
 GM1 = 4*(math.pi**2)
 m_sun = 1.989e30
 
@@ -27,27 +33,16 @@ gm_planets = []
 for i in range(len(m_planets)):
     gm_planets.append(GM1 * m_planets[i] / m_sun)
 
-# star eccentricities
-#ecc_1 = 0.1                         # eccentricty of suns new orbit (approx fixed before)
-#ecc_2 = (GM1/GM2)**2*(1+ecc_1)-1    # eccentricity of new star
-
 # Sun's perihelion (and new star's perihelion)
 perihelion_star = 1
 
 # planet perhelions
 AU = 149597870.7 # (1 Astronomical Unit in km)
 
-#a1 = perihelion_star/(1-ecc_1)
-#a2 = perihelion_star/(1-ecc_2)
-
 def rad_from_RA(hr,m,sec):
     mins = m + sec/60.0
     hrs = hr + mins/60.0
     return hrs*2*math.pi/24.0
-
-#vp_star = math.sqrt(GMs) * math.sqrt((1+ecc_star) / (a*(1-ecc_star)) * (1+(m_1/m_2)))
-#vp_1 = math.sqrt(GM1+GM2) * math.sqrt((1+ecc_1) / (a1*(1-ecc_1)))
-#vp_2 = math.sqrt(GM1+GM2) * math.sqrt((1+ecc_2) / (a2*(1-ecc_2)))
 
 # initial velocity and position of the sun
 vx1 = 0
@@ -95,6 +90,7 @@ t_initial = 0
 t = t_initial
 count = 0
 
+# These arrays record the positions and time for the sun and new star.
 xarr1 = np.array([x1])
 yarr1 = np.array([y1])
 xarr2 = np.array([x2])
@@ -106,18 +102,22 @@ planet_coordinates = []
 for i in range(len(xyps)):
     planet_coordinates.append( [ np.array([xyps[i][0]]), np.array([xyps[i][1]]) ] )
 
-# planetid -> 0 (merc), 1 (venus),...
+# planetid -> 0 (mercury), 1 (venus),...
 
 def dist(p1, p2):
+    '''Calculate the distance between two Cartesian points as ordered pairs'''
     return math.sqrt( ( p1[0] - p2[0] )**2 + ( p1[1] - p2[1] )**2 )
 
 def accelx(gm1, xy1, xy2, r):
+    '''Calculate the acceleration of 2 caused by 1 along the x direction'''
     return (gm1 * (xy1[0] - xy2[0]) / r**3)
 
 def accely(gm1, xy1, xy2, r):
+    '''Calculate the acceleration of 2 caused by 1 along the y direction'''
     return (gm1 * (xy1[1] - xy2[1]) / r**3)
 
 def ax(pid, xy1, xy2, xyps):
+    '''The acceleration of planet pid caused by the two stars along the x direction'''
     r1 = dist(xyps[pid],xy1)
     a1 = accelx(GM1, xy1, xyps[pid], r1)
     r2 = dist(xyps[pid],xy2)
@@ -131,6 +131,7 @@ def ax(pid, xy1, xy2, xyps):
     return ax_total
 
 def ay(pid, xy1, xy2, xyps):
+    '''The acceleration of planet pid caused by the two stars along the y direction'''
     r1 = dist(xyps[pid],xy1)
     a1 = accely(GM1, xy1, xyps[pid], r1)
     r2 = dist(xyps[pid],xy2)
@@ -186,6 +187,7 @@ while (t < t_final):
       for i in range(len(xyps)):
           xyps[i] = [xyps[i][0] + vps[i][0]*h + .5*aps[i][0]*h**2, xyps[i][1] + vps[i][1]*h + .5*aps[i][1]*h**2]
       
+      # calculate next accelerations of the two stars
       axn1=ax1(x1,y1,x2,y2)
       ayn1=ay1(x1,y1,x2,y2)
       axn2=ax2(x1,y1,x2,y2)
@@ -195,6 +197,7 @@ while (t < t_final):
       for i in range(len(xyps)):
           apsn[i] = [ax(i,[x1,y1],[x2,y2],xyps), ay(i,[x1,y1],[x2,y2],xyps)]
       
+      # next velocities of the two stars
       vx1=vx1+(h/2)*(ax01+axn1)
       vy1=vy1+(h/2)*(ay01+ayn1)
       vx2=vx2+(h/2)*(ax02+axn2)
@@ -203,8 +206,8 @@ while (t < t_final):
       # update velocities of planets
       for i in range(len(xyps)):
           vps[i] = [vps[i][0] + h/2*(aps[i][0] + apsn[i][0]), vps[i][1] + h/2*(aps[i][1] + apsn[i][1])]
-      
-      #if (count%200 == 0 ):                                                                                                         
+
+      # record new positions
       xarr1 = np.append(xarr1,x1)
       yarr1 = np.append(yarr1,y1)
       xarr2 = np.append(xarr2,x2)
@@ -217,7 +220,7 @@ while (t < t_final):
       t = t + h
       tarr = np.append(tarr,t)
 
-#turtle
+# turtle setup
 world_radius = 30
 turtle.setup(width=1000,height=1000)
 sc = turtle.Screen()
@@ -236,17 +239,18 @@ t1.shape("circle")
 t2.shape("circle")
 t1.shapesize(0.6,0.6)
 
-# pick planet colors
-c_planets = ["Gray","Yellow","Green","Red","Orange","Yellow","Blue","Blue"]
-
-t_planets = []
-for i in range(len(c_planets)):
-    t_planets.append(turtle.Turtle())
+# planet colors, see trinket.io/docs/colors for more options
+c_planets = ["Gray","Yellow","Green","Red","Orange","Yellow","cornflowerblue","Blue"]
 
 # planet images
 i_planets = ["mercury.gif","venus.gif","earth.gif","mars.gif","jupiter.gif","saturn.gif","uranus.gif","neptune.gif"]
 
-for i in range(len(c_planets)):
+# planet turtles
+t_planets = []
+for i in range(len(i_planets)):
+    t_planets.append(turtle.Turtle())
+
+for i in range(len(t_planets)):
     t_planets[i].color(c_planets[i])
     t_planets[i].pensize(1)
     t_planets[i].speed("fastest")
@@ -271,7 +275,7 @@ t2.down()
 for i in range(len(t_planets)):
     t_planets[i].down()
 
-# get slimmed down position arrays
+# get slimmed-down position arrays
 speed = 20
 x1arr = xarr1[2::speed]
 y1arr = yarr1[2::speed]
@@ -285,4 +289,5 @@ for i in range(len(pcoord[0][0])):
     t2.goto(x2arr[i],y2arr[i])
     for j in range(len(c_planets)):
         t_planets[j].goto(pcoord[j][0][i],pcoord[j][1][i])
-turtle.done()
+turtle.bye()
+quit()
