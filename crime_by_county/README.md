@@ -22,3 +22,5 @@ Model types:
 
 The random forest model has the best mix of performance, speed, and insight for this set of data.
 Considerable cleaning and standardization was required before training.
+
+![property crime level prediction error county choropleth](pclerr_choropleth.png)
